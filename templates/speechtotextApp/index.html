@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLGPT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #ffffff; /* Similar background to the image */
+            margin-top: 10px;
+        }
+        .chat-container {
+            max-width: 60%;
+            margin: auto;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .chat-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .chat-row.you {
+            
+            justify-content: flex-start;
+        }
+        .sender-circle {
+            height: 40px;
+            width: 40px;
+            background-color: #36d821a6;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+        }
+        .chat-bubble {
+            background-color: #36d821a6;; /* Bootstrap's green color */
+            color: rgb(0, 0, 0);
+            
+            border-radius: 25px;
+            padding: 10px 20px;
+            position: relative;
+            
+            max-width: 60%;
+        }
+        .chat-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 100%;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+            border-left-color: #f2f2f2;
+            border-bottom: 0;
+            border-top: 0;
+            margin-left: -15px;
+            margin-bottom: -7px;
+        }
+        .chat-bubble.you {
+            background-color: #36d821a6;;
+            color: rgb(0, 0, 0);
+        }
+        .chat-bubble.you::after {
+            left: auto;
+            right: 100%;
+            border-left-color: transparent;
+            border-right-color: #34B7F1;
+            margin-left: 0;
+            margin-right: -15px;
+        }
+        .chat-meta {
+            font-size: 0.85rem;
+            color: #ddd;
+            text-align: right;
+        }
+        .chat-input-bar {
+            border-radius: 8px;
+            max-width: 60%;
+            margin: auto;
+            bottom: 0;
+            left: 0;
+            margin-bottom: 4rem;
+            padding: 10px;
+            background: #2230b1d6;;
+            display: flex;
+            justify-content: center;
+
+        }
+        /* Additional style for bot chat bubble alignment and color */
+        .bot-row {
+            justify-content: flex-end;
+        }
+
+        .bot-circle {
+            color: #fff;
+            background-color: #007bff;
+            margin-left: 10px; /* For alignment on the right */
+            margin-right: 0;
+            margin-right: 10px;
+        }
+
+        .bot-bubble {
+            background-color: #007bff; /* Blue background for bot */
+            color: white; /* White text color */
+        }
+        .title {
+            font-size: 24px;
+            color: #161313;
+            text-align: left;
+            padding: 10px 15px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <!-- <div class="title">SQLGPT</div> -->
+    <div class="chat-input-bar">
+        <div class="input-group mb-3 px-2">
+            <input type="text" class="form-control" style="margin-right: 0.5rem" id="input-box" placeholder="Type your question" aria-label="Recipient's username">
+            <button id="microphone-btn" class="btn btn-outline-light" type="button">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button id="submit-btn" class="btn btn-light ms-1" type="button">Answer</button>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <!-- Placeholder for chat messages -->
+        <div id="chat-area">
+            <!-- Chat messages will be appended here -->
+        </div>
+    </div>
+
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script>
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (typeof window.SpeechRecognition === 'undefined') {
+            alert('Your browser does not support Speech Recognition. Try Google Chrome.');
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.continuous = false;
+
+            const inputBox = document.getElementById('input-box');
+            const microphoneBtn = document.getElementById('microphone-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            const chatArea = document.getElementById('chat-area');
+
+            recognition.addEventListener('result', (event) => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0])
+                    .map(result => result.transcript)
+                    .join('');
+                inputBox.value = transcript;
+            });
+
+            recognition.addEventListener('end', () => {
+                microphoneBtn.classList.remove('btn-danger');
+                microphoneBtn.classList.add('btn-outline-secondary');
+            });
+
+            microphoneBtn.addEventListener('click', () => {
+                if (recognition.recording) {
+                    recognition.stop();
+                    recognition.recording = false;
+                    microphoneBtn.classList.remove('btn-danger');
+                    microphoneBtn.classList.add('btn-outline-secondary');
+                } else {
+                    recognition.start();
+                    recognition.recording = true;
+                    microphoneBtn.classList.remove('btn-outline-secondary');
+                    microphoneBtn.classList.add('btn-danger');
+                    inputBox.value = ''; // Clear input box for new recording
+                }
+            });
+
+            // submitBtn.addEventListener('click', () => {
+            //     const text = inputBox.value;
+            //     if (text) {
+            //         const row = document.createElement('div');
+            //         row.classList.add('chat-row');
+
+            //         const senderCircle = document.createElement('div');
+            //         senderCircle.classList.add('sender-circle');
+            //         senderCircle.textContent = 'You';
+
+            //         const bubble = document.createElement('div');
+            //         bubble.classList.add('chat-bubble');
+            //         bubble.textContent = text;
+
+            //         row.appendChild(senderCircle);
+            //         row.appendChild(bubble);
+            //         chatArea.appendChild(row);
+
+            //         inputBox.value = ''; // Clear
+            //     }
+            // });
+            submitBtn.addEventListener('click', () => {
+                const text = inputBox.value.trim();
+                if (text) {
+                    addMessageToChat(text, 'You');
+                    // Send POST request to Django view
+                    $.get('/chat/', {'user_question': text}, function(data) {
+                        const botAnswer = data.message;
+                        console.log(data);
+                        addMessageToChat(botAnswer, 'Bot');
+                    });
+
+                    inputBox.value = ''; // Clear the input box after submission
+                }
+            });
+
+
+            function addMessageToChat(message, sender) {
+                const row = document.createElement('div');
+                row.classList.add('chat-row');
+                if (sender.toLowerCase() === 'you') {
+                    row.classList.add('you');
+
+                    const senderCircle = document.createElement('div');
+                    senderCircle.classList.add('sender-circle');
+                    senderCircle.textContent = sender;
+
+                    row.appendChild(senderCircle);
+                } else {
+                    row.classList.add('bot-row'); // Use the bot-row for right alignment
+
+                    const senderCircle = document.createElement('div');
+                    senderCircle.classList.add('sender-circle', 'bot-circle');
+                    senderCircle.textContent = sender;
+
+                    row.appendChild(senderCircle);
+                }
+
+                const bubble = document.createElement('div');
+                bubble.classList.add('chat-bubble');
+                bubble.textContent = message;
+
+                if (sender.toLowerCase() === 'you') {
+                    bubble.classList.add('you');
+                } else {
+                    bubble.classList.add('bot-bubble'); // Use the bot-bubble for different styling
+                }
+
+                row.appendChild(bubble);
+                chatArea.appendChild(row);
+
+                // Scroll to the bottom of the chat container
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+            
+        }
+
+    </script>
+</body>
+</html>
