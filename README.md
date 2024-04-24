@@ -1,4 +1,5 @@
-# VADQA Project Setup Guide
+# VADQA : Voice-Activated Database Query Assistant (VADQA)
+![Demo Image](https://github.com/sahityams/VADQA/blob/main/project.png "DemoImage")
 
 This README provides detailed instructions on how to set up the VADQA Django project on your local environment, including dependencies, virtual environment setup, and starting the development server.
 
